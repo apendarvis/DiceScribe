@@ -1,8 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+from tkinter import simpledialog
 import subprocess
 import os
+import shutil
+from tkinter import messagebox
 
 libreoffice_path = r"C:\Program Files\LibreOffice\program"
 
@@ -31,6 +34,44 @@ def open_folder_with_LibreOffice():
                 else:
                     subprocess.Popen([os.path.join(libreoffice_path, "soffice.exe"), file_path])
 
+def copy_and_rename_and_open_with_LibreOffice():
+    # Ask the user to choose the file to copy
+    source_file_path = filedialog.askopenfilename(title="Choose a file to copy")
+    if source_file_path:
+        # Ask for the destination folder to copy the file to
+        dest_folder = filedialog.askdirectory(title="Choose a folder to copy the file to")
+        if dest_folder:
+            # Ask the user to provide a new name for the file
+            new_file_name = simpledialog.askstring("Rename File", "Enter a new name for the file (with extension):")
+            if new_file_name:
+                try:
+                    # Ensure the new file name has the correct extension
+                    ext = os.path.splitext(source_file_path)[1]
+                    if not new_file_name.endswith(ext):
+                        new_file_name += ext
+                    
+                    # Create the full destination path for the renamed file
+                    dest_file_path = os.path.join(dest_folder, new_file_name)
+                    
+                    # Copy the file to the new location with the new name
+                    shutil.copy(source_file_path, dest_file_path)
+                    print(f"File copied to {dest_file_path}")
+                    
+                    # Now open the copied (and renamed) file with LibreOffice
+                    ext = os.path.splitext(dest_file_path)[1].lower()
+                    if ext in ['.ods', '.xls', '.xlsx']:
+                        subprocess.Popen([os.path.join(libreoffice_path, "scalc.exe"), dest_file_path])
+                    elif ext in ['.odt', '.doc', '.docx']:
+                        subprocess.Popen([os.path.join(libreoffice_path, "swriter.exe"), dest_file_path])
+                    else:
+                        subprocess.Popen([os.path.join(libreoffice_path, "soffice.exe"), dest_file_path])  # fallback
+                    
+                    messagebox.showinfo("Success", f"File copied and opened with LibreOffice.")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to copy the file: {e}")
+            else:
+                messagebox.showwarning("No Name", "You must provide a new name for the file.")
+
 class QuickSwitchApp:
     def __init__(self, root):
         self.root = root
@@ -58,6 +99,8 @@ class QuickSwitchApp:
         if title == "Character Sheet":
             open_button = ttk.Button(frame, text="Open with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
+            copy_rename_open_button = ttk.Button(frame, text="Copy, Rename, and Open with LibreOffice", command=copy_and_rename_and_open_with_LibreOffice)
+            copy_rename_open_button.pack(pady=10)
         if title == "Notes":
             open_button = ttk.Button(frame, text="Open with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
