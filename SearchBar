@@ -1,0 +1,25 @@
+import tkinter as tk
+from tkinter import ttk
+
+def on_search(event):
+    search_text = combo.get().lower()
+
+    if search_text:
+        filtered_data = [item for item in filtered_Words if search_text in item.lower()]
+        combo['values'] = filtered_data  
+    else:
+        combo['values'] = filtered_Words
+        combo.set('')
+        
+filtered_Words = ['character sheet', 'maps', 'items', 'battle rosters']
+
+root = tk.Tk()
+root.title("Search")
+
+combo = ttk.Combobox(root, state="normal", width=60)
+combo.pack(pady=10)
+
+
+combo.bind("<Button-1>", on_search)
+
+root.mainloop()
