@@ -72,6 +72,34 @@ def copy_and_rename_and_open_with_LibreOffice():
             else:
                 messagebox.showwarning("No Name", "You must provide a new name for the file.")
 
+def make_new_campaign():
+    # Prompt user to select the location for the new campaign folder
+    campaign_location = filedialog.askdirectory(title="Choose a location for the new campaign folder")
+    if campaign_location:
+        # Ask the user for the new campaign folder name
+        campaign_name = simpledialog.askstring("Campaign Name", "Enter the name for the new campaign:")
+        if campaign_name:
+            try:
+                # Create the new campaign folder path
+                new_campaign_path = os.path.join(campaign_location, campaign_name)
+                
+                # Check if the folder already exists
+                if not os.path.exists(new_campaign_path):
+                    os.makedirs(new_campaign_path)
+                    
+                    # Create subfolders: DM Only, Players, General
+                    os.makedirs(os.path.join(new_campaign_path, "DM Only"))
+                    os.makedirs(os.path.join(new_campaign_path, "Players"))
+                    os.makedirs(os.path.join(new_campaign_path, "General"))
+                    
+                    messagebox.showinfo("Success", f"New campaign folder '{campaign_name}' created with subfolders.")
+                else:
+                    messagebox.showwarning("Folder Exists", "A folder with that name already exists.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to create the campaign folder: {e}")
+        else:
+            messagebox.showwarning("No Name", "You must provide a name for the campaign folder.")
+
 class QuickSwitchApp:
     def __init__(self, root):
         self.root = root
@@ -107,6 +135,8 @@ class QuickSwitchApp:
         if title == "Campaign":
             open_button = ttk.Button(frame, text="Open All Files in Folder", command=open_folder_with_LibreOffice)
             open_button.pack(pady=10)
+            new_campaign_button = ttk.Button(frame, text="Make New Campaign", command=make_new_campaign)
+            new_campaign_button.pack(pady=10)
         self.notebook.add(frame, text=title)
         self.pages[title] = frame
 
