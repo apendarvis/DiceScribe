@@ -112,9 +112,9 @@ class QuickSwitchApp:
         self.history = []
         
         # Sample pages
-        self.add_page("Notes", "this is where you can write down your notes anytime.")
-        self.add_page("Character Sheet", "this is where all your character info is stored.")
-        self.add_page("Campaign", "this is where you can keep all your notes on your campaigns.")
+        self.add_page("Notes", "View and write notes.") 
+        self.add_page("Character Sheets", "View and create Character Sheets.")
+        self.add_page("Campaigns", "View and create Campiagns.")
         
         self.notebook.bind("<Button-1>", self.track_page)
         self.notebook.bind_all("<Control-Tab>", self.next_tab)
@@ -125,17 +125,17 @@ class QuickSwitchApp:
         label = ttk.Label(frame, text=text, padding=10)
         label.pack(expand=True)
         if title == "Character Sheet":
-            open_button = ttk.Button(frame, text="Open with LibreOffice", command=open_with_LibreOffice)
+            open_button = ttk.Button(frame, text="Open Character Sheet with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
-            copy_rename_open_button = ttk.Button(frame, text="Copy, Rename, and Open with LibreOffice", command=copy_and_rename_and_open_with_LibreOffice)
+            copy_rename_open_button = ttk.Button(frame, text="Use a Character Sheet Template", command=copy_and_rename_and_open_with_LibreOffice)
             copy_rename_open_button.pack(pady=10)
         if title == "Notes":
-            open_button = ttk.Button(frame, text="Open with LibreOffice", command=open_with_LibreOffice)
+            open_button = ttk.Button(frame, text="Open Notes with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
         if title == "Campaign":
-            open_button = ttk.Button(frame, text="Open All Files in Folder", command=open_folder_with_LibreOffice)
+            open_button = ttk.Button(frame, text="Open all Campaign files", command=open_folder_with_LibreOffice)
             open_button.pack(pady=10)
-            new_campaign_button = ttk.Button(frame, text="Make New Campaign", command=make_new_campaign)
+            new_campaign_button = ttk.Button(frame, text="Create New Campaign", command=make_new_campaign)
             new_campaign_button.pack(pady=10)
         self.notebook.add(frame, text=title)
         self.pages[title] = frame
