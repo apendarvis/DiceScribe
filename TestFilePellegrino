@@ -124,7 +124,7 @@ class QuickSwitchApp:
         frame = ttk.Frame(self.notebook)
         label = ttk.Label(frame, text=text, padding=10)
         label.pack(expand=True)
-        if title == "Character Sheet":
+        if title == "Character Sheets":
             open_button = ttk.Button(frame, text="Open Character Sheet with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
             copy_rename_open_button = ttk.Button(frame, text="Use a Character Sheet Template", command=copy_and_rename_and_open_with_LibreOffice)
@@ -132,7 +132,7 @@ class QuickSwitchApp:
         if title == "Notes":
             open_button = ttk.Button(frame, text="Open Notes with LibreOffice", command=open_with_LibreOffice)
             open_button.pack(pady=10)
-        if title == "Campaign":
+        if title == "Campaigns":
             open_button = ttk.Button(frame, text="Open all Campaign files", command=open_folder_with_LibreOffice)
             open_button.pack(pady=10)
             new_campaign_button = ttk.Button(frame, text="Create New Campaign", command=make_new_campaign)
