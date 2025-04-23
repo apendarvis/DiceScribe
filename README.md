@@ -4,7 +4,23 @@ DiceScribe is a customizable TTRPG note manager built with Python that includes 
 
 ## Features
 
-###
+### Organization
+
+- **Categorization**: Create and organize folders by campaigns, with customizable categories (e.g., NPCs, quests, player info).
+- **Quick Switch**: A fast toggle between notes, character sheets, and other pages.
+
+### Search and Navigation
+
+- **Directory**: Users can quickly get to important scenes or notes when needed.
+- **Search Bar**: Search through all notes and folders to find key moments or details.
+
+### Templates
+
+- **Character Sheet Templates**: Pre-made templates for character details, with options for further customization.
+
+### Additional Features
+
+- **Roll Wizard**: A wizard designed to help make game actions quicker.
 
 ## Getting Started
 
