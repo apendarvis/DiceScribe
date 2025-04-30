@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import filedialog
@@ -186,6 +186,8 @@ class QuickSwitchApp:
                 break
 
 class DiceScribeApp:
+    import tempfile
+
     def make_background_frame(self, parent):
         frame = tk.Frame(parent)
         bg_label = tk.Label(frame, image=self.bg_photo)
@@ -369,21 +371,58 @@ class DiceScribeApp:
 
     def add_image_page(self, title, image_path):
         try:
-            img = Image.open(image_path)
-            img.thumbnail((800, 600))
-            photo = ImageTk.PhotoImage(img)
+            from PIL import Image
 
-            frame = ttk.Frame(self.notebook)
-            label = ttk.Label(frame, image=photo)
-            label.image = photo  # Keep a reference!
-            label.pack(expand=True, fill='both')
+            pil_img = Image.open(image_path)
+            photo = ImageTk.PhotoImage(pil_img)
+
+            frame = tk.Frame(self.notebook)
+
+            # Canvas and scrollbars
+            canvas = tk.Canvas(frame, width=800, height=600)
+            h_scroll = ttk.Scrollbar(frame, orient="horizontal", command=canvas.xview)
+            v_scroll = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+            canvas.configure(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+
+            canvas.grid(row=0, column=0, sticky="nsew")
+            v_scroll.grid(row=0, column=1, sticky="ns")
+            h_scroll.grid(row=1, column=0, sticky="ew")
+
+            frame.grid_rowconfigure(0, weight=1)
+            frame.grid_columnconfigure(0, weight=1)
+
+            # Frame inside canvas to hold the image
+            image_frame = tk.Frame(canvas)
+            image_label = tk.Label(image_frame, image=photo)
+            image_label.image = photo  # Prevent garbage collection
+            image_label.pil_image = pil_img  # Keep reference for printing
+            image_label.pack()
+
+            canvas.create_window((0, 0), window=image_frame, anchor="nw")
+            canvas.config(scrollregion=(0, 0, photo.width(), photo.height()))
+
+            # Add print button
+            ttk.Button(frame, text="🖨️ Print", command=self.print_current_editor_page).grid(
+                row=2, column=0, columnspan=2, pady=5
+            )
 
             self.notebook.add(frame, text=title)
-            self.pages[title] = label
-            self.select_tab(title)
+            self.pages[title] = image_label
+            self.notebook.select(frame)
+
+            # --- Mousewheel scroll support ---
+            def _on_mousewheel(event):
+                if event.state & 0x1:  # Shift is held → horizontal scroll
+                    canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+                else:
+                    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+            canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
 
         except Exception as e:
-            print(f"Error loading image: {e}")
+            messagebox.showerror("Error", f"Error loading image: {e}")
 
     def open_scene_in_editor(self, title, content):
         if title in self.pages:
@@ -409,6 +448,7 @@ class DiceScribeApp:
         self.notebook.bind("<Button-1>", self.track_page)
         self.notebook.bind_all("<Control-Tab>", self.next_tab)
         self.notebook.bind_all("<Control-Shift-Tab>", self.prev_tab)
+        self.notebook.bind_all("<Control-p>", lambda event: self.print_current_editor_page())
 
     def build_search_bar(self):
         search_frame = ttk.Frame(self.editor_page)
@@ -467,6 +507,7 @@ class DiceScribeApp:
         text_widget.pack(expand=True, fill='both')
 
         ttk.Button(frame, text="💾 Save", command=lambda: self.save_content(title, text_widget)).pack(pady=5)
+        ttk.Button(frame, text="🖨️ Print", command=self.print_current_editor_page).pack(pady=5)
         self.notebook.add(frame, text=title)
         self.pages[title] = text_widget
 
@@ -707,17 +748,114 @@ class DiceScribeApp:
         print(f"Saved to {output_image}")
 
 
-    def display_image(self, pil_image):
-        img = pil_image.resize((800, 600))
-        photo = ImageTk.PhotoImage(img)
+    def display_image(self, path):
+        try:
+            from PIL import Image
 
-        frame = tk.Frame(self.notebook)
-        label = tk.Label(frame, image=photo)
-        label.image = photo
-        label.pack()
+            pil_img = Image.open(path)
+            img = pil_img  # Don't resize here—keep full resolution for scrolling
+            photo = ImageTk.PhotoImage(img)
 
-        self.notebook.add(frame, text="Generated Sheet")
-        self.notebook.select(frame)
+            frame = tk.Frame(self.notebook)
+
+            # Create canvas and scrollbars
+            canvas = tk.Canvas(frame, width=800, height=600)
+            h_scroll = ttk.Scrollbar(frame, orient="horizontal", command=canvas.xview)
+            v_scroll = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+            canvas.configure(xscrollcommand=h_scroll.set, yscrollcommand=v_scroll.set)
+
+            # Create inner frame to hold the image
+            image_frame = tk.Frame(canvas)
+            image_label = tk.Label(image_frame, image=photo)
+            image_label.image = photo
+            image_label.pil_image = pil_img
+            image_label.pack()
+
+            # Create window on canvas
+            canvas.create_window((0, 0), window=image_frame, anchor="nw")
+
+            # Update scroll region after image loads
+            image_frame.update_idletasks()
+            canvas.config(scrollregion=(0, 0, photo.width(), photo.height()))
+
+            # Layout
+            canvas.grid(row=0, column=0, sticky="nsew")
+            v_scroll.grid(row=0, column=1, sticky="ns")
+            h_scroll.grid(row=1, column=0, sticky="ew")
+
+            frame.grid_rowconfigure(0, weight=1)
+            frame.grid_columnconfigure(0, weight=1)
+
+            # Add Print Button
+            ttk.Button(frame, text="🖨️ Print", command=self.print_current_editor_page).grid(row=2, column=0, columnspan=2, pady=5)
+
+            self.notebook.add(frame, text="Generated Sheet")
+            self.pages["Generated Sheet"] = image_label  # Keep track of the label (with .pil_image)
+            self.notebook.select(frame)
+            def _on_mousewheel(event):
+                if event.state & 0x1:  # Shift is held → horizontal scroll
+                    canvas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+                else:
+                    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+            # Windows bindings
+            canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not display image: {e}")
+
+    def print_current_editor_page(self):
+        import tempfile
+        from PIL import Image
+        import platform
+
+        current_tab_id = self.notebook.select()
+        current_tab_title = self.notebook.tab(current_tab_id, "text")
+        widget = self.pages.get(current_tab_title)
+
+        if isinstance(widget, ScrolledText):
+            # --- TEXT CONTENT PRINT ---
+            content = widget.get("1.0", tk.END).strip()
+            if not content:
+                messagebox.showinfo("Empty", "There is no content to print.")
+                return
+
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as tmp_file:
+                    tmp_file.write(content)
+                    tmp_path = tmp_file.name
+
+                subprocess.run(["notepad.exe", "/p", tmp_path], check=True)
+
+            except Exception as e:
+                messagebox.showerror("Print Error", f"Failed to print text:\n{e}")
+
+        elif isinstance(widget, tk.Label) and hasattr(widget, "image"):
+            # --- IMAGE PRINT ---
+            try:
+                pil_image = widget.image._PhotoImage__photo  # Access Tkinter image object
+                # Convert back to PIL image using the original PIL reference if you kept one
+                if hasattr(widget, "pil_image"):
+                    pil_image = widget.pil_image
+                else:
+                    messagebox.showerror("Print Error", "Original image not available for printing.")
+                    return
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img_file:
+                    tmp_img_path = tmp_img_file.name
+                    pil_image.save(tmp_img_path)
+
+                # Platform-specific print handling
+                if platform.system() == "Windows":
+                    os.startfile(tmp_img_path, "print")
+                else:
+                    subprocess.run(["lpr", tmp_img_path])  # macOS/Linux alternative
+
+            except Exception as e:
+                messagebox.showerror("Print Error", f"Failed to print image:\n{e}")
+
+        else:
+            messagebox.showinfo("Not Printable", "The current tab cannot be printed.")
 
 
 
